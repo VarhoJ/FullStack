@@ -16,7 +16,7 @@ const PersonForm = (props) => {
     const [newNumber, setNewNumber] = useState('')
   
     const sameName = person => {
-        props.update(person, newNumber)
+        props.update(person)
     }
 
   

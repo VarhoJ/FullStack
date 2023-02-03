@@ -4,13 +4,14 @@ import peopleService from './services/people'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
-
+import Message from './components/Notification'
 
  
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newFilter, setNewFilter] = useState('')
-
+  const [notification, setNewNotification] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     peopleService 
@@ -33,11 +34,14 @@ const App = () => {
       .then(returnedPerson => {
         console.log("palautettu persoona: " , returnedPerson)
         setPersons(persons.concat(returnedPerson))
-        
     })
-      .catch(error => console.log("Tässä on virhe"))
+    setNewNotification(`Added ${person.name}`)
+    setTimeout(() => {
+      setNewNotification(null)
+    }, 2000)
     
   }
+
 
   const updateServer = person => { 
     const confirmation = window.confirm(`${person.name} is already added to phonebook, replace the old number with a new one?`)
@@ -53,7 +57,18 @@ const App = () => {
     if(confirmation) {
       peopleService
         .update(n.id,person)
-        .then(response => console.log(response))
+        .then(response => {
+          console.log(response)
+          setNewNotification(`Updated the number of ${person.name}`)
+        })
+        .catch(error => setErrorMessage(`Information on ${person.name} has already been removed from server`))
+
+      
+      setTimeout(() => {
+        setErrorMessage(null)
+        setNewNotification(null)
+      }, 2000)
+
       peopleService  // Toistoa
         .getAll()
         .then(initialPeople => {
@@ -71,20 +86,36 @@ const App = () => {
     if(confirmation) { 
       peopleService
         .remove(person.id)
-        .then(message => console.log("Deletion succesfull with message ", message))
-        .catch(() => console.log("Error in deletion"))
+        .then(response => {
+          setNewNotification(`${person.name} succesfully removed`)
+        })
+        .catch(error => {
+          setErrorMessage(`Information of  ${person.name} has already been removed from server`)
+        })
+
       peopleService  // Toistoa
         .getAll()
         .then(initialPeople => {
-          console.log(initialPeople)
+          console.log("Nyt päivitetään henkilöt")
           setPersons(initialPeople)
+          setTimeout(() => {
+            setErrorMessage(null)
+            setNewNotification(null)
+        }, 2000)
         })
+
+        
+
+
     }
   }
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Message.Error message={errorMessage} />
+      <Message.Notification message={notification} />
+
       <Filter 
         newFilter={newFilter}
         handleNewFilter={handleNewFilter}
